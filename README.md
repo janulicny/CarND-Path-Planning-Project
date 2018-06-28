@@ -1,16 +1,10 @@
 # CarND-Path-Planning-Project
 Self-Driving Car Engineer Nanodegree Program
-   
-### Simulator.
-You can download the Term3 Simulator which contains the Path Planning Project from the [releases tab (https://github.com/udacity/self-driving-car-sim/releases/tag/T3_v1.2).
 
-### Goals
+
+## Goals
 In this project your goal is to safely navigate around a virtual highway with other traffic that is driving +-10 MPH of the 50 MPH speed limit. You will be provided the car's localization and sensor fusion data, there is also a sparse map list of waypoints around the highway. The car should try to go as close as possible to the 50 MPH speed limit, which means passing slower traffic when possible, note that other cars will try to change lanes too. The car should avoid hitting other cars at all cost as well as driving inside of the marked road lanes at all times, unless going from one lane to another. The car should be able to make one complete loop around the 6946m highway. Since the car is trying to go 50 MPH, it should take a little over 5 minutes to complete 1 loop. Also the car should not experience total acceleration over 10 m/s^2 and jerk that is greater than 10 m/s^3.
 
-#### The map of the highway is in data/highway_map.txt
-Each waypoint in the list contains  [x,y,s,dx,dy] values. x and y are the waypoint's map coordinate position, the s value is the distance along the road to get to that waypoint in meters, the dx and dy values define the unit normal vector pointing outward of the highway loop.
-
-The highway's waypoints loop around so the frenet s value, distance along the road, goes from 0 to 6945.554.
 
 ## Basic Build Instructions
 
@@ -19,55 +13,10 @@ The highway's waypoints loop around so the frenet s value, distance along the ro
 3. Compile: `cmake .. && make`
 4. Run it: `./path_planning`.
 
-Here is the data provided from the Simulator to the C++ Program
 
-#### Main car's localization Data (No Noise)
-
-["x"] The car's x position in map coordinates
-
-["y"] The car's y position in map coordinates
-
-["s"] The car's s position in frenet coordinates
-
-["d"] The car's d position in frenet coordinates
-
-["yaw"] The car's yaw angle in the map
-
-["speed"] The car's speed in MPH
-
-#### Previous path data given to the Planner
-
-//Note: Return the previous list but with processed points removed, can be a nice tool to show how far along
-the path has processed since last time. 
-
-["previous_path_x"] The previous list of x points previously given to the simulator
-
-["previous_path_y"] The previous list of y points previously given to the simulator
-
-#### Previous path's end s and d values 
-
-["end_path_s"] The previous list's last point's frenet s value
-
-["end_path_d"] The previous list's last point's frenet d value
-
-#### Sensor Fusion Data, a list of all other car's attributes on the same side of the road. (No Noise)
-
-["sensor_fusion"] A 2d vector of cars and then that car's [car's unique ID, car's x position in map coordinates, car's y position in map coordinates, car's x velocity in m/s, car's y velocity in m/s, car's s position in frenet coordinates, car's d position in frenet coordinates. 
-
-## Details
-
-1. The car uses a perfect controller and will visit every (x,y) point it recieves in the list every .02 seconds. The units for the (x,y) points are in meters and the spacing of the points determines the speed of the car. The vector going from a point to the next point in the list dictates the angle of the car. Acceleration both in the tangential and normal directions is measured along with the jerk, the rate of change of total Acceleration. The (x,y) point paths that the planner recieves should not have a total acceleration that goes over 10 m/s^2, also the jerk should not go over 50 m/s^3. (NOTE: As this is BETA, these requirements might change. Also currently jerk is over a .02 second interval, it would probably be better to average total acceleration over 1 second and measure jerk from that.
-
-2. There will be some latency between the simulator running and the path planner returning a path, with optimized code usually its not very long maybe just 1-3 time steps. During this delay the simulator will continue using points that it was last given, because of this its a good idea to store the last points you have used so you can have a smooth transition. previous_path_x, and previous_path_y can be helpful for this transition since they show the last points given to the simulator controller with the processed points already removed. You would either return a path that extends this previous path or make sure to create a new path that has a smooth transition with this last path.
-
-## Tips
-
-A really helpful resource for doing this project and creating smooth trajectories was using http://kluge.in-chemnitz.de/opensource/spline/, the spline function is in a single hearder file is really easy to use.
-
----
-
-## Dependencies
-
+### Dependencies
+* simulator.
+  * You can download the Term3 Simulator which contains the Path Planning Project from the [here](https://github.com/udacity/self-driving-car-sim/releases/tag/T3_v1.2).
 * cmake >= 3.5
   * All OSes: [click here for installation instructions](https://cmake.org/install/)
 * make >= 4.1
@@ -86,55 +35,114 @@ A really helpful resource for doing this project and creating smooth trajectorie
     cd uWebSockets
     git checkout e94b6e1
     ```
-
-## Editor Settings
-
-We've purposefully kept editor configuration files out of this repo in order to
-keep it as simple and environment agnostic as possible. However, we recommend
-using the following settings:
-
-* indent using spaces
-* set tab width to 2 spaces (keeps the matrices in source code aligned)
-
-## Code Style
-
-Please (do your best to) stick to [Google's C++ style guide](https://google.github.io/styleguide/cppguide.html).
-
-## Project Instructions and Rubric
-
-Note: regardless of the changes you make, your project must be buildable using
-cmake and make!
+## Development diary
+2. Implemented car going just straight.
+3. Car going in circles, with reuse of previous path.
+4. Car following map waypoints. Car teleports 30 m every 0.02 s.
+5. Line interpolation between map waypoints + lane can be chosen. Car drive better, but jerky behaviour around waypoints. Seems to be worse in the far right lane, because the the car is far from the original waypoints on the yellow line.
+6. Implemented smoothing of custom sparse points via splines. Suddenly, the car drives nicely without exceeding limits for accelaration or jerk. Time to deal with the collision avoidance.
+7. When slower car is in front of us, use its speed as reference for our speed.
+8. Instead of slowing down, do a left lane change.
+9. Think about the logic of the state machine. Decided to use 3 states - left lane change, right lane change and keep in lane with speed adjustments. The calculation splitted into two parts - setting flags and choosing state.
+10. Flags based on other vehicle positions.
+11. Flags made a little bit more complicated to take into account other vehicles' relative speed and if they are in front of us or behind us.
+12. Experimenting with making the distances in flags dependant on relative speed to allow the vehicle to be more aggressive in slow speed/traffic situations.
+13. Reverting back to previous version of flags.
+14. Since we are only checking adjacents lanes, it is beneficial to be in the center lane to maximize the number of available options. Implemented returning back to center lane.
+15. Sometimes, the vehicle cannot decide which lane is better and gets stuck driving between two lanes, violating the rule for quick lane change. Implemented flag for ongoing lane change maneuver, which disables other lane changes until the current maneuver finishes.
+16. Some code refactoring.
 
 
-## Call for IDE Profiles Pull Requests
+## Final implementation description
 
-Help your fellow students!
+### ```main.cpp``` contains the code.
 
-We decided to create Makefiles with cmake to keep this project as platform
-agnostic as possible. Similarly, we omitted IDE profiles in order to ensure
-that students don't feel pressured to use one IDE or another.
+- ```204-210``` **setting up initial variables**
+	- we start in center lane with speed 0 m/s
+	- no lane change in progress, start the timer for lane changes
+- ```233-245``` **receiving values from simulator**
+	- vehicle variables, previous path, sensor fusion data
+- ```254``` **remember how many points were unused from the previous path**
+- ```256-260``` **vehicle reference position**
+	- corresponds to vehicle position on the latest planned position
+	- initially setup with the current vehicle position
+- ```262-288``` **coarse waypoints and update reference position**
+	- declare coarse waypoints, which will be used to generate new trajectory
+	- feed the last two points from the previous path to coarse waypoints or use extrapolation into past from current vehicle position
+	- in the same time update the vehicle reference position to the last point on previous path 
+	
+#### Sensor fusion
 
-However! I'd love to help people get up and running with their IDEs of choice.
-If you've created a profile for an IDE that you think other students would
-appreciate, we'd love to have you add the requisite profile files and
-instructions to ide_profiles/. For example if you wanted to add a VS Code
-profile, you'd add:
+- ```293-295``` **Declare 3 flags**
+	- is something in my lane and are left/right lanes available for lane change
+- ```300-360``` **Loop over all detected cars**
+	- ```303``` **Another flag for something in the same longitudinal space**
+	- ```305-313``` **Calculate vehicle absolute speed and predict its position into future to the time of our reference position**
+	- ```317-320``` **Check if there is vehicle in front and set flag accordingly**
+	- ```325-328``` **Check and set the longitudinal space flag**
+	- ```330-344``` **Left lane available flag**
+		- check if we there is even a lane on the left
+		- check if there is freespace in the left lane
+	- ```348-360``` **Right lane available flag**
+		- check if we there is even a lane on the right
+		- check if there is freespace in the right lane
 
-* /ide_profiles/vscode/.vscode
-* /ide_profiles/vscode/README.md
+#### State machine ```362-414```
 
-The README should explain what the profile does, how to take advantage of it,
-and how to install it.
+1. something is ahead of me in my lane
+	1. consider left lane change
+	2. consider right lane change
+	3. slow down
+2. my lane is free
+	1. consider lane change to center
+	2. speed up to allowed limit
 
-Frankly, I've never been involved in a project with multiple IDE profiles
-before. I believe the best way to handle this would be to keep them out of the
-repo root to avoid clutter. My expectation is that most profiles will include
-instructions to copy files to a new location to get picked up by the IDE, but
-that's just a guess.
+Anytime lane change is initiated, set the lane change in progress flag and reset counter. Until the counter reaches some value and resets the flag, no lane change is allowed.
 
-One last note here: regardless of the IDE used, every submitted project must
-still be compilable with cmake and make./
+#### Calculate new trajectory to take
 
-## How to write a README
-A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
+- ```418-434``` **Finish coarse waypoints**
+	- using the new picked lane, add 3 points to the 2 points from the previous path
+	- transform them into local vehicle coordinates
+- ```437-438``` **Fit a spline through the coarse waypoints**
+- ```440-449``` **Initiate the new trajectory waypoints**
+	- add to it the remaining points from the previous path
+- ```451-475``` **Add new waypoints to the trajectory**
+	- evaluate the spline at points corresponing to the requested speed
+	- transform back to global coordinates
+	- repeat until we have 50 waypoint ready in the new trajectory
+
+#### Debug
+- ```477-482``` **Debug**
+	- show the flag values
+	- Is there something blocking us in our lane?
+	- Is there something blocking left lane?
+	- Is there something blocking right lane?
+	- Is currently lane change maneuver being executed?
+	
+#### ```484-490``` **Send the new trajectory to the simulator**
+
+## Result and discusssion
+
+- the car is able to drive quite reliably around the track
+- record is 48 miles without incident
+![record](images/48miles.PNG)
+- the car stays in its lane apart from the lane changes
+- the limits for speed, acceleration and jerk are not exceed
+- the incidents are dozens of miles apart, some automated incident recording would be necesarry to debug the fails
+- in my opinion, the corner cases will be dense traffic with big speed differences.
+
+
+## Ideas for improvements
+
+- deal with the oscillating character of the slowing down behind a vehicle
+- consider not only adjacent lanes
+- make the safe distances in flag claculations dependant on relative speed. We could navigate slow traffic more fluently.
+- more advanced path generation: cost minimizing scheme on pool of candidate trajectories
+
+
+
+## Acknowledgement
+
+This project uses spline fucntion by http://kluge.in-chemnitz.de/opensource/spline/.
 
